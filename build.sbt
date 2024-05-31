@@ -8,4 +8,8 @@ lazy val root = project
 
     scalaVersion := scala3Version,
     scalacOptions += "-experimental",
+    libraryDependencies += "io.github.neotypes" %% "neotypes-core" % "1.0.0",
+    libraryDependencies += "dev.soundness" % "vacuous-core" % "0.1.0",
+    libraryDependencies += "dev.soundness" % "rudiments-core" % "0.1.0",
+    libraryDependencies += "dev.soundness" % "dendrology-tree" % "0.2.0"
   )
