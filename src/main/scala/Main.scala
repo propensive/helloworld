@@ -1,28 +1,26 @@
 import soundness.*
+import neotypes.{Driver, GraphDatabase}
+import org.neo4j.driver.AuthTokens
+import neotypes.syntax.all.*
+import neotypes.query.*
+import neotypes.generic.implicits.*
+import neotypes.mappers.*
+import scala.concurrent.*
+
+given ExecutionContext = ExecutionContext.global
+
+case class Movie(title: String, released: Int)
 
 @main
 def run(): Unit =
   val username = "neo4j"
-  val password = "****"
+  val password = "testing999"
   val url = "neo4j+s://7973ac6d.databases.neo4j.io"
 
-  val output: (Option[Result], Option[Result]) =
-    Neo4j.session(username, password, url):
-      val q1 = query("MATCH (p:Person) RETURN p.name")
-      val q2 = query("MATCH (m:Movie) RETURN m.name")
+  val driver = GraphDatabase.asyncDriver[Future](url, AuthTokens.basic(username, password))
+  val future = c"""MATCH (movie:Movie) RETURN movie LIMIT 5""".query(ResultMapper.productDerive[Movie]).list(driver)
 
-      Neo4j.transaction:
-        operation1()
-        operation2()
-
-      Path("/home/data/file.txt").open: file =>
-        val q1 = query("MATCH (p:Person) RETURN p.name")
-        q1.writeTo(file)
-      
-      (q1, q2)
-
-  // can't use connection here
-  //query("MATCH (m:Movie) RETURN m.name")(connection) // should not compile
+  Await.result(future, duration.Duration.Inf).foreach(println)
 
 def query(using connection: Neo4jConnection)(gql: String): Option[Result] = None
 
@@ -32,13 +30,12 @@ case class Neo4jConnection(username: String, password: String):
   def close(): Unit = ()
 
 object Neo4j:
-
   def session[T]
       (username: String, password: String, url: String)
       (block: Neo4jConnection ?=> T)
           : T =
     given conn: Neo4jConnection = Neo4jConnection(username, password) // connect with username, passowrd and url
-    
+
     try block finally conn.close()
 
 
